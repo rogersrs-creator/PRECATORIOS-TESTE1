@@ -8,6 +8,7 @@ Ordem de busca para cada base:
 import io
 import os
 import re
+import urllib.error
 import urllib.request
 
 import pandas as pd
@@ -151,8 +152,19 @@ def carregar_todas(urls: dict) -> tuple[tuple, pd.DataFrame, dict]:
     urls: {'IPCA15': '...', 'POUPANCA': '...', 'SELIC': '...', 'IPCA': '...', 'GRACA': '...'}
     Retorna ((ipca15, poup, selic, ipca), df_graca, {nome: origem})
     """
-    dfs, origens = {}, {}
+    dfs, origens, erros = {}, {}, []
     for nome in ARQUIVOS_LOCAIS:
-        dfs[nome], origens[nome] = carregar_base(nome, urls.get(nome, ""))
+        try:
+            dfs[nome], origens[nome] = carregar_base(nome, urls.get(nome, ""))
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                erros.append(f"{nome}: planilha não está pública (erro {e.code}). Compartilhe como "
+                             f"'Qualquer pessoa com o link – Leitor'.")
+            else:
+                erros.append(f"{nome}: erro HTTP {e.code} ao baixar a planilha.")
+        except Exception as e:
+            erros.append(f"{nome}: {e}")
+    if erros:
+        raise RuntimeError("\n\n".join(erros))
     bases = (dfs["IPCA15"], dfs["POUPANCA"], dfs["SELIC"], dfs["IPCA"])
     return bases, dfs["GRACA"], origens
