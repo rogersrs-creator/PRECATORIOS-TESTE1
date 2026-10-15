@@ -58,9 +58,14 @@ ultima_data_comum = min(df["data"].max() for df in bases)
 # ------------------------------------------------------------------------------
 # Formulário de entrada
 # ------------------------------------------------------------------------------
-st.title("📊 Atualização de Precatórios – Propostas 2012 a 2020")
+ANO_MIN, ANO_MAX = 2018, 2020   # este app usa somente o motor das propostas 2018 a 2020
 
-anos = sorted(df_graca["ANO_PROPOSTA"].tolist())
+st.title(f"📊 Atualização de Precatórios – Propostas {ANO_MIN} a {ANO_MAX}")
+
+anos = sorted(a for a in df_graca["ANO_PROPOSTA"].tolist() if ANO_MIN <= a <= ANO_MAX)
+if not anos:
+    st.error(f"A planilha GRACA não tem nenhuma proposta entre {ANO_MIN} e {ANO_MAX}.")
+    st.stop()
 
 PAGAMENTOS_VAZIOS = pd.DataFrame({
     "Data de Pagamento": pd.Series(dtype="datetime64[ns]"),
@@ -187,3 +192,4 @@ if res:
                        type="primary", use_container_width=True)
     d2.download_button("⬇️ Baixar CSV (formato atual)", res["csv"], file_name=f"{nome_base}.csv",
                        mime="text/csv", use_container_width=True)
+
