@@ -70,8 +70,8 @@ PAGAMENTOS_VAZIOS = pd.DataFrame({
 with st.form("form_calculo"):
     st.subheader("Dados da proposta")
     c1, c2, c3, c4 = st.columns(4)
-    ano_proposta = c1.selectbox("Ano da proposta", anos,
-                                index=anos.index(2018) if 2018 in anos else 0)
+    ano_proposta = c1.selectbox("Ano da proposta", anos, index=None,
+                                placeholder="Selecione o ano...")
     data_final = c2.date_input("Data final da dívida", value=date.today().replace(day=1),
                                format="DD/MM/YYYY",
                                help="Só o mês/ano é considerado (o dia é ajustado para 1º).")
@@ -101,6 +101,10 @@ with st.form("form_calculo"):
 # ------------------------------------------------------------------------------
 if enviado:
     erros = []
+    if ano_proposta is None:
+        st.error("Selecione o **ano da proposta** antes de calcular.")
+        st.session_state.pop("resultado", None)
+        st.stop()
     principal = para_numero(principal_txt)
     juros = para_numero(juros_txt) if juros_txt.strip() else 0.0
     if pd.isna(principal) or principal <= 0:
